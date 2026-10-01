@@ -1,0 +1,325 @@
+# Starship configuration to faithfully emulate the Powerlevel10k "Lean" theme
+# Reference: romkatv/powerlevel10k lean configuration (nerdfont-v3, 24h time, 1 line, sparse)
+
+# Empty line before each prompt (matches POWERLEVEL9K_PROMPT_ADD_NEWLINE=true)
+add_newline = true
+
+# Left prompt layout:
+# Equivalent to POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir vcs prompt_char)
+format = """$directory$git_branch$git_commit$git_state$git_metrics$git_status$character"""
+
+# Right prompt layout:
+# Equivalent to POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS
+right_format = """$status$cmd_duration$jobs${custom.direnv}${env_var.ENV}$python$nodejs$golang$rust$java$ruby$php$kubernetes$terraform$aws${custom.aws_session}$azure$gcloud$docker_context$nix_shell${custom.container}$username$hostname$time"""
+
+# Disable the package module, hiding it from the prompt completely
+[package]
+disabled = true
+
+# -----------------------------------------------------------------------------
+# Prompt Character / Vi-Mode (matches POWERLEVEL9K_PROMPT_CHAR_*)
+# Success: 76 (green), Error: 196 (red)
+# Insert: ❯ | Command: ❮ | Visual: V | Overwrite: ▶
+# -----------------------------------------------------------------------------
+[character]
+success_symbol = "[➜](bold green)"
+error_symbol = "[✗](bold red) "
+vimcmd_symbol = "[❮](bold 76)"
+vimcmd_replace_one_symbol = "[▶](bold 76)"
+vimcmd_replace_symbol = "[▶](bold 76)"
+vimcmd_visual_symbol = "[V](bold 76)"
+
+# -----------------------------------------------------------------------------
+# Current Directory (matches POWERLEVEL9K_DIR_*)
+# Base color: 31 (cyan), Anchor/Git repo root: 39 (blue), Read-only: 196 (red)
+# -----------------------------------------------------------------------------
+[directory]
+style = "bold 31"
+repo_root_style = "bold 39"
+truncation_length = 3
+truncate_to_repo = true
+truncation_symbol = "…/"
+read_only = " 󰌾"
+read_only_style = "bold 196"
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+# -----------------------------------------------------------------------------
+# Git / VCS (matches my_git_formatter in .p10k.zsh)
+# Clean: 76 | Modified: 178 | Untracked: 39 | Conflicted: 196
+# Ahead: ⇡ | Behind: ⇣ | Stashes: * | Conflicted: ~ | Untracked: ? | Staged: + | Unstaged: !
+# -----------------------------------------------------------------------------
+[git_branch]
+symbol = "🌱 "
+truncation_symbol = ""
+style = "bold 76"
+format = "[$symbol$branch(:$remote_branch)]($style) "
+
+[git_commit]
+commit_hash_length = 4
+tag_symbol = "🔖"
+
+[git_state]
+format = '[\($state( $progress_current of $progress_total)\)]($style) '
+cherry_pick = '[🍒 PICKING](bold red)'
+
+[git_metrics]
+added_style = 'bold blue'
+format = '[+$added]($added_style)/[-$deleted]($deleted_style) '
+
+[git_status]
+style = "bold 178"
+format = '([$all_status$ahead_behind]($style) )'
+conflicted = "[~$count](bold 196) "
+ahead = "[⇡$count](bold 76) "
+behind = "[⇣$count](bold 76) "
+diverged = "[⇡$ahead_count](bold 76)[⇣$behind_count](bold 76) "
+untracked = "[?$count](bold 39) "
+stashed = "[*$count](bold 76) "
+modified = "[!$count](bold 178) "
+staged = "[+$count](bold 178) "
+renamed = "[»$count](bold 178) "
+deleted = "[✘$count](bold 196) "
+
+# -----------------------------------------------------------------------------
+# Execution Time (matches POWERLEVEL9K_COMMAND_EXECUTION_TIME_*)
+# Foreground: 101, Threshold: 3s, Precision: 0, No visual icon
+# -----------------------------------------------------------------------------
+[cmd_duration]
+min_time = 3_000
+style = "101"
+format = "[$duration]($style) "
+show_milliseconds = false
+
+# -----------------------------------------------------------------------------
+# Command Status / Exit Code (matches POWERLEVEL9K_STATUS_*)
+# Hidden when success (OK=false), red cross on error: 160
+# -----------------------------------------------------------------------------
+[status]
+disabled = false
+style = "bold 160"
+symbol = "✘"
+format = "[$symbol $status]($style) "
+pipestatus = true
+pipestatus_format = "[$pipestatus => $symbol $status]($style) "
+
+# -----------------------------------------------------------------------------
+# Background Jobs (matches POWERLEVEL9K_BACKGROUND_JOBS_*)
+# Foreground: 70
+# -----------------------------------------------------------------------------
+[jobs]
+symbol = "✦"
+style = "bold 70"
+format = "[$symbol$number]($style) "
+threshold = 1
+
+# -----------------------------------------------------------------------------
+# Direnv (matches POWERLEVEL9K_DIRENV_*)
+# Foreground: 178
+# -----------------------------------------------------------------------------
+[direnv]
+disabled = false
+style = "bold 178"
+symbol = "direnv "
+format = "[$symbol$loaded]($style) "
+
+# Custom direnv indicator (used in right_format instead of the built-in module above)
+[custom.direnv]
+format = "[\\[direnv\\]]($style) "
+style = "fg:yellow dimmed"
+when = "env | grep -E '^DIRENV_FILE='"
+
+# -----------------------------------------------------------------------------
+# Environment marker ($ENV)
+# -----------------------------------------------------------------------------
+[env_var.ENV]
+variable = 'ENV'
+default = ''
+style = "bold red"
+format = "🎯 [$env_value]($style) "
+
+# -----------------------------------------------------------------------------
+# Programming Languages & Runtimes (matches p10k foreground mappings)
+# -----------------------------------------------------------------------------
+[nodejs]
+symbol = "󰎔 "
+style = "bold 70"
+format = 'via [🤖 $version](bold green) '
+detect_extensions = ["js", "mjs", "cjs", "ts", "mts", "cts"]
+
+[python]
+symbol = "󰌠 "
+style = "bold 37"
+format = '[$symbol$pyenv_prefix($version )(\($virtualenv\) )]($style)'
+
+[golang]
+symbol = "󰟓 "
+style = "bold 37"
+format = "[$symbol($version )]($style)"
+
+[rust]
+symbol = "󱘗 "
+style = "bold 37"
+format = "[$symbol($version )]($style)"
+
+[java]
+symbol = "󰬷 "
+style = "bold 32"
+format = "[$symbol($version )]($style)"
+
+[ruby]
+symbol = " "
+style = "bold 168"
+format = "[$symbol($version )]($style)"
+
+[php]
+symbol = "󰌟 "
+style = "bold 99"
+format = "[$symbol($version )]($style)"
+
+# -----------------------------------------------------------------------------
+# Cloud & DevOps (matches p10k kubecontext, terraform, aws, azure, gcloud)
+# -----------------------------------------------------------------------------
+[kubernetes]
+disabled = false
+symbol = "󱃾 "
+style = "bold 134"
+format = '[$symbol$context( \($namespace\))]($style) '
+
+[[kubernetes.contexts]]
+context_pattern = ".*cluster/(?P<cluster>(.*prod.*)+)"
+style = "bold red"
+context_alias = "$cluster"
+
+[[kubernetes.contexts]]
+context_pattern = "teleport\\..*?-(?P<cluster>.*prod.*)+"
+style = "bold red"
+context_alias = "[T].$cluster"
+
+[[kubernetes.contexts]]
+context_pattern = ".*cluster/(?P<cluster>[\\w-]+)"
+style = "bold blue"
+context_alias = "$cluster"
+
+[[kubernetes.contexts]]
+context_pattern = "teleport\\..*?-(?P<cluster>.*)"
+style = "bold blue"
+context_alias = "[T].$cluster"
+
+[terraform]
+symbol = "󱁢 "
+style = "bold 38"
+format = '[$version]($style) '
+
+[aws]
+symbol = " "
+style = "bold blue"
+format = 'on [$symbol$profile(\($region\))]($style) '
+
+# AWS session time remaining (from $AWS_CREDENTIAL_EXPIRATION)
+[custom.aws_session]
+command = '''
+expiration_time=$(date -d "$AWS_CREDENTIAL_EXPIRATION" +%s)
+current_time=$(date +%s)
+time_left=$((expiration_time - current_time))
+
+if [[ $time_left -gt 0 ]]; then
+    hours_left=$((time_left / 3600))
+    minutes_left=$(((time_left % 3600) / 60))
+
+    if [[ $hours_left -gt 0 ]]; then
+        time_display="${hours_left}h ${minutes_left}m"
+    else
+        time_display="${minutes_left}m"
+    fi
+
+    # show a warning if there are less than 15 minutes left
+    if [[ $time_left -lt 900 ]]; then
+        echo -e "⚠️\e[31m $time_display left\e[0m"
+    else
+        echo -e "⌛\e[33;32m $time_display left\e[0m"
+    fi
+fi
+'''
+when = '[ -n "$AWS_CREDENTIAL_EXPIRATION" ]'
+
+[azure]
+disabled = false
+symbol = "󰠅 "
+style = "bold 32"
+format = "[$symbol$subscription]($style) "
+
+[gcloud]
+disabled = true
+symbol = "󱇶 "
+style = "bold 32"
+format = '[$symbol$account(@$project)]($style) '
+
+[docker_context]
+symbol = "󰡨 "
+style = "bold 38"
+format = "[$symbol$context]($style) "
+
+[nix_shell]
+symbol = "󱄅 "
+style = "bold 74"
+format = "[$symbol$state]($style) "
+
+# -----------------------------------------------------------------------------
+# Container name
+# Podman / Toolbox / Distrobox: name= from /run/.containerenv
+# Docker / DevPod: resolved via the docker socket from the container ID in
+# /proc/self/mountinfo (cached per container), falling back to the short ID.
+# Replaces the built-in [container] module, which only prints "Docker".
+# -----------------------------------------------------------------------------
+[custom.container]
+shell = ["sh"]
+when = "test -f /run/.containerenv -o -f /.dockerenv"
+symbol = "⬢ "
+style = "bold 208"
+format = "[$symbol$output]($style) "
+command = '''
+if [ -f /run/.containerenv ]; then
+    sed -n 's/^name="\(.*\)"$/\1/p' /run/.containerenv
+    exit
+fi
+cache="/tmp/.starship-container-name-$(id -u)"
+[ -s "$cache" ] && exec cat "$cache"
+id=$(grep -oE '/docker/containers/[0-9a-f]{64}' /proc/self/mountinfo | head -n1 | cut -d/ -f4)
+name=""
+if [ -n "$id" ] && command -v docker >/dev/null 2>&1; then
+    name=$(docker inspect -f '{{.Name}}' "$id" 2>/dev/null | sed 's#^/##')
+fi
+if [ -n "$name" ]; then
+    printf '%s\n' "$name" | tee "$cache"
+else
+    printf '%s\n' "${id:-docker}" | cut -c1-12
+fi
+'''
+
+# -----------------------------------------------------------------------------
+# Context / Hostname & Username (matches POWERLEVEL9K_CONTEXT_*)
+# Username only displayed as root or over SSH; hostname always displayed
+# User style: 180 (root: bold 178), Host style: 180
+# -----------------------------------------------------------------------------
+[username]
+show_always = false
+style_user = "180"
+style_root = "bold 178"
+format = "[$user]($style)"
+
+[hostname]
+ssh_only = false
+disabled = false
+style = "180"
+format = "on [$hostname](bold red) "
+trim_at = "."
+
+# -----------------------------------------------------------------------------
+# Time (matches POWERLEVEL9K_TIME_*)
+# Foreground: 66, Format: %H:%M:%S (24h time), No icon
+# -----------------------------------------------------------------------------
+[time]
+disabled = false
+time_format = "%T"
+style = "66"
+format = "[$time]($style)"
