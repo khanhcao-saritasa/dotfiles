@@ -1,3 +1,22 @@
+# Initialize Homebrew environment (prioritize user installation)
+# Done first so brew-installed tools (starship, zoxide, fzf, kubectl, eza) are on PATH
+if [ -d "$HOME/.linuxbrew" ]; then
+    eval "$($HOME/.linuxbrew/bin/brew shellenv)"
+elif [ -d "/home/linuxbrew/.linuxbrew" ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+elif [ -d "/opt/homebrew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -d "/usr/local/Homebrew" ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+# Fix term issue (fall back when the terminal's terminfo isn't installed, e.g. over SSH)
+case "$TERM" in
+    xterm-ghostty|xterm-kitty|alacritty)
+        infocmp "$TERM" &>/dev/null || export TERM=xterm-256color
+        ;;
+esac
+
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
@@ -70,7 +89,15 @@ DISABLE_MAGIC_FUNCTIONS="true"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git z zsh-autosuggestions zsh-nvm)
 
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=241'
+
 source $ZSH/oh-my-zsh.sh
+
+# Setup kubectl completion if kubectl is available
+# Kubectl completion must be loaded AFTER 'source $ZSH/oh-my-zsh.sh' runs
+if command -v kubectl &>/dev/null; then
+    source <(kubectl completion zsh)
+fi
 
 # ------------------------------------------------------------------------------
 # Home / End / Delete keys (vi mode only binds the terminfo variants by default)
@@ -144,15 +171,17 @@ export GTK_IM_MODULE=fcitx
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 if [ -f /usr/share/ca-certificates/azure_cli_cert.pem ]; then
     export REQUESTS_CA_BUNDLE=/usr/share/ca-certificates/azure_cli_cert.pem
+elif [ -f /etc/ssl/certs/ca-certificates.crt ]; then
+    export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 fi
 
 alias vim='nvim'
 # Changing "ls" to "exa"
-alias ls='/usr/bin/eza -al --color=always --group-directories-first' # my preferred listing
-alias la='/usr/bin/eza -a --color=always --group-directories-first' # all files and dirs
-alias ll='/usr/bin/eza -l --color=always --group-directories-first' # long format
-alias lt='/usr/bin/eza -aT --color=always --group-directories-first' # tree listing
-alias l.='/usr/bin/eza -a | egrep "^\."'
+alias ls='eza -al --color=always --group-directories-first' # my preferred listing
+alias la='eza -a --color=always --group-directories-first' # all files and dirs
+alias ll='eza -l --color=always --group-directories-first' # long format
+alias lt='eza -aT --color=always --group-directories-first' # tree listing
+alias l.='eza -a | egrep "^\."'
 
 # Colorize grep output (good for log files)
 alias grep='grep --color=auto'
@@ -172,6 +201,38 @@ alias gcp="git add . && git commit --amend --no-edit && git push -f"
 alias grc="git rebase --continue"
 alias grs="git rebase --skip"
 alias grhh="git reset --hard HEAD"
+
+# kubectl
+alias k="kubectl"
+alias kgp="k get po "
+alias kgpo="k get po -owide "
+alias kgn="k get node "
+alias kgs="k get svc "
+alias kgd="k get deploy "
+alias ke="k edit "
+alias kd="k describe "
+alias kn="kubectl config set-context --current --namespace "
+alias kr="k run --dry-run=client -oyaml --image "
+alias ka="k apply -f "
+alias krep="k replace --force -f "
+alias kgpon="k get po -owide -n "
+alias kg="k get "
+do=(--dry-run=client -o yaml)
+
+# terraform
+alias tri="terraform init"
+alias trp="terraform plan"
+alias trv="terraform validate"
+alias tra="terraform apply --auto-approve"
+alias trd="terraform apply -destroy --auto-approve"
+
+# terragrunt
+alias tg="terragrunt"
+alias tgi="tg init"
+alias tgp="tg plan"
+alias tgv="tg validate"
+alias tga="tg apply --auto-approve"
+alias tgd="tg apply -destroy --auto-approve"
 
 # docker
 alias dcd="docker compose down"
