@@ -23,10 +23,6 @@ export ZSH="$HOME/.oh-my-zsh"
 # Set name of the theme to load --- set to "" since prompt is managed by Starship
 ZSH_THEME=""
 
-
-bindkey -v
-export KEYTIMEOUT=1
-
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
 # a theme from this variable instead of looking in $ZSH/themes/
@@ -100,9 +96,87 @@ if command -v kubectl &>/dev/null; then
 fi
 
 # ------------------------------------------------------------------------------
-# Home / End / Delete keys (vi mode only binds the terminfo variants by default)
+# Vi mode (must come after OMZ, which sets bindkey -e; and before Starship,
+# which wraps zle-keymap-select to redraw its ❮ vimcmd prompt symbol)
 # ------------------------------------------------------------------------------
-for keymap in viins vicmd; do
+bindkey -v
+export KEYTIMEOUT=1   # Esc switches to normal mode in 10ms instead of 400ms
+
+# Cursor shape: beam in insert mode, block in normal mode
+_vi_cursor() {
+    case $KEYMAP in
+        vicmd)      print -n '\e[2 q' ;;   # steady block
+        viins|main) print -n '\e[6 q' ;;   # steady beam
+    esac
+}
+_vi_cursor_reset() { print -n '\e[2 q' }   # restore block cursor for programs (nvim, less...)
+zle-keymap-select() { _vi_cursor }
+zle-line-init()     { zle -K viins; _vi_cursor }
+zle -N zle-keymap-select
+zle -N zle-line-init
+preexec_functions+=(_vi_cursor_reset)
+
+# Insert mode: keep familiar emacs-style editing (vim's own insert mode allows these)
+bindkey -M viins '^?' backward-delete-char     # Backspace past the insert start point
+bindkey -M viins '^H' backward-delete-char
+bindkey -M viins '^W' backward-kill-word
+bindkey -M viins '^U' backward-kill-line
+bindkey -M viins '^A' beginning-of-line
+bindkey -M viins '^E' end-of-line
+bindkey -M viins '^K' kill-line
+bindkey -M viins '^P' up-line-or-search
+bindkey -M viins '^N' down-line-or-search
+
+# Normal mode: history search on prefix with k/j, edit full command in $EDITOR with v
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search edit-command-line
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+zle -N edit-command-line
+bindkey -M vicmd 'k' up-line-or-beginning-search
+bindkey -M vicmd 'j' down-line-or-beginning-search
+bindkey -M vicmd 'v' edit-command-line
+bindkey -M vicmd '/' history-incremental-search-backward
+bindkey -M vicmd '?' history-incremental-search-forward
+
+# Vim text objects: ciw, di", ya(, ci{ ...
+autoload -Uz select-bracketed select-quoted
+zle -N select-bracketed
+zle -N select-quoted
+for km in visual viopp; do
+    bindkey -M $km -- '-' vi-up-line-or-history
+    for c in {a,i}${(s..)^:-'()[]{}<>bB'}; do bindkey -M $km $c select-bracketed; done
+    for c in {a,i}${(s..)^:-\'\"\`\|,./:;=+@}; do bindkey -M $km $c select-quoted; done
+done
+unset km c
+
+# Vim surround: cs"' (change), ds" (delete), ys{motion}" (add), S" in visual
+autoload -Uz surround
+zle -N delete-surround surround
+zle -N add-surround surround
+zle -N change-surround surround
+bindkey -M vicmd 'cs' change-surround
+bindkey -M vicmd 'ds' delete-surround
+bindkey -M vicmd 'ys' add-surround
+bindkey -M visual 'S' add-surround
+
+# Yank to system clipboard in normal mode: Y copies the whole line
+_vi_yank_clipboard() {
+    if command -v wl-copy &>/dev/null; then print -rn -- "$BUFFER" | wl-copy
+    elif command -v xclip &>/dev/null; then print -rn -- "$BUFFER" | xclip -selection clipboard
+    elif command -v pbcopy &>/dev/null; then print -rn -- "$BUFFER" | pbcopy
+    fi
+}
+zle -N _vi_yank_clipboard
+bindkey -M vicmd 'Y' _vi_yank_clipboard
+
+# Ctrl+F accepts zsh-autosuggestions suggestion (vi insert + emacs)
+bindkey -M viins '^F' autosuggest-accept
+bindkey -M emacs '^F' autosuggest-accept
+
+# ------------------------------------------------------------------------------
+# Home / End / Delete keys (bound in every keymap; OMZ only binds the terminfo variants)
+# ------------------------------------------------------------------------------
+for keymap in emacs viins vicmd; do
     bindkey -M $keymap '^[[H'  beginning-of-line   # Home (normal mode)
     bindkey -M $keymap '^[OH'  beginning-of-line   # Home (application mode)
     bindkey -M $keymap '^[[1~' beginning-of-line   # Home (tmux/screen/linux console)

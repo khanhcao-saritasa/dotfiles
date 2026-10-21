@@ -119,3 +119,7 @@ fi
 if [ -f "$HOME/.local/bin/env" ]; then
     . "$HOME/.local/bin/env"
 fi
+
+# Vi mode (Esc -> normal mode, hjkl/w/b/dd/ciw..., v opens $EDITOR)
+set -o vi
+bind -m vi-insert '"\C-l": clear-screen'   # keep Ctrl+L clear in insert mode
