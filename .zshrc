@@ -288,6 +288,36 @@ gcof() {
     git switch "$branch"
 }
 
+# d3 [dir]: tmux dev layout — lazygit | nvim / terminal | claude.
+# Inside tmux it opens a new window; outside it creates (or attaches to) a session named after the dir.
+d3() {
+    local dir="${1:-$PWD}"
+    dir="${dir:A}"
+    local name="${${dir:t}//[.:]/_}"
+    local left center right
+
+    if [[ -n $TMUX ]]; then
+        left=$(tmux new-window -P -F '#{pane_id}' -n "$name" -c "$dir")
+    else
+        if tmux has-session -t "=$name" 2>/dev/null; then
+            tmux attach -t "=$name"
+            return
+        fi
+        left=$(tmux new-session -d -P -F '#{pane_id}' -s "$name" -c "$dir" -x "$COLUMNS" -y "$LINES")
+    fi
+
+    center=$(tmux split-window -h -l 75% -P -F '#{pane_id}' -t "$left" -c "$dir")
+    right=$(tmux split-window -h -l 33% -P -F '#{pane_id}' -t "$center" -c "$dir")
+    tmux split-window -v -l 30% -t "$center" -c "$dir"
+
+    tmux send-keys -t "$left" 'lazygit' Enter
+    tmux send-keys -t "$center" 'nvim' Enter
+    tmux send-keys -t "$right" 'claude' Enter
+    tmux select-pane -t "$center"
+
+    [[ -z $TMUX ]] && tmux attach -t "=$name"
+}
+
 # kubectl
 alias k="kubectl"
 alias kgp="k get po "
