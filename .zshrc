@@ -275,6 +275,18 @@ alias gcp="git add . && git commit --amend --no-edit && git push -f"
 alias grc="git rebase --continue"
 alias grs="git rebase --skip"
 alias grhh="git reset --hard HEAD"
+# gcof [query]: fuzzy-pick a branch (local + remote, most recent first, git log preview) and check it out.
+# Remote-only branches get a local tracking branch via `git switch`.
+gcof() {
+    local branch
+    branch=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads refs/remotes \
+        | grep -v -e '/HEAD$' -e '^origin$' \
+        | sed 's#^origin/##' | awk '!seen[$0]++' \
+        | fzf --query="$*" --select-1 --exit-0 --height=50% --reverse \
+            --preview 'git log --oneline --graph --color=always -20 {} 2>/dev/null || git log --oneline --graph --color=always -20 origin/{}') \
+        || return
+    git switch "$branch"
+}
 
 # kubectl
 alias k="kubectl"
