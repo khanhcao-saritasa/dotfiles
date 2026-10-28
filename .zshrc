@@ -83,7 +83,7 @@ DISABLE_MAGIC_FUNCTIONS="true"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git z zsh-autosuggestions zsh-nvm)
+plugins=(git z zsh-autosuggestions zsh-nvm direnv)
 
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=241'
 
